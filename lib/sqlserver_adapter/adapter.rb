@@ -1,7 +1,3 @@
-require DataMapper.root / 'lib' / 'dm-core' / 'adapters' / 'data_objects_adapter'
-
-require 'do_sqlserver'
-
 DataObjects::Sqlserver = DataObjects::SqlServer
 
 module DataMapper
@@ -85,7 +81,7 @@ module DataMapper
         # Functionality therefore must be mimicked through the use of nested selects.
         # See also:
         # - http://stackoverflow.com/questions/2840/paging-sql-server-2005-results
-        # - http://stackoverflow.com/questions/216673/emulate-mysql-limit-clause-in-microsoft-sql-server-2000
+        # - http://stackoverflow.com/questions/216673/emulate-sqlserver-limit-clause-in-microsoft-sql-server-2000
         #
         def add_limit_offset!(statement, limit, offset, bind_values)
           # Limit and offset is handled by subqueries (see #select_statement).

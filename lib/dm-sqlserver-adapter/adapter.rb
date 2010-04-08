@@ -1,3 +1,6 @@
+require 'do_sqlserver'
+require 'dm-do-adapter'
+
 DataObjects::Sqlserver = DataObjects::SqlServer
 
 module DataMapper

@@ -9,8 +9,6 @@ require 'dm-sqlserver-adapter/spec/setup'
 ENV['ADAPTER']          = 'sqlserver'
 ENV['ADAPTER_SUPPORTS'] = 'all'
 
-DataMapper::Spec.setup
-
 describe 'DataMapper::Adapters::SqlserverAdapter' do
 
   before :all do

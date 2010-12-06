@@ -47,9 +47,15 @@ module DataMapper
           from_statement    = " FROM #{quote_name(query.model.storage_name(name))}"
           where_statement   = " WHERE #{conditions_statement}" unless conditions_statement.blank?
           join_statement    = join_statement(query, bind_values, qualify)
-          order_statement   = order_statement(order_by, qualify)
-          no_group_by       = group_by ? group_by.empty? : true
-          no_order_by       = order_by ? order_by.empty? : true
+          use_group_by      = group_by && group_by.any?
+          use_order_by      = order_by && order_by.any?
+
+          if use_order_by
+            order_statement = order_statement(order_by, qualify)
+          elsif use_limit_offset_subquery
+            order_by = query.model.key.map { |property| DataMapper::Query::Direction.new(property) }
+            order_statement = order_statement(order_by, qualify)
+          end
 
           if use_limit_offset_subquery
             # If using qualifiers, we must qualify elements outside the subquery
@@ -57,22 +63,22 @@ module DataMapper
             # Otherwise, we hit upon "multi-part identifier cannot be bound"
             # error from SQL Server.
             statement = "SELECT #{columns_statement(fields, 'RowResults')}"
-            statement << " FROM ( SELECT Row_Number() OVER (ORDER BY #{order_statement}) AS RowID,"
+            statement << " FROM (SELECT ROW_NUMBER() OVER (ORDER BY #{order_statement}) AS RowId,"
             statement << " #{columns_statement}"
             statement << from_statement
             statement << join_statement                                      if qualify
             statement << where_statement                                     if where_statement
             statement << ") AS RowResults"
             statement << " WHERE RowId > #{offset} AND RowId <= #{offset + limit}"
-            statement << " GROUP BY #{columns_statement(group_by, 'RowResults')}" unless no_group_by
-            statement << " ORDER BY #{order_statement(order_by, 'RowResults')}"   unless no_order_by
+            statement << " GROUP BY #{columns_statement(group_by, 'RowResults')}" if use_group_by
+            statement << " ORDER BY #{order_statement(order_by, 'RowResults')}"   if use_order_by
           else
             statement = "SELECT #{columns_statement}"
             statement << from_statement
             statement << join_statement                                      if qualify
             statement << where_statement                                     if where_statement
-            statement << " GROUP BY #{columns_statement(group_by, qualify)}" unless no_group_by
-            statement << " ORDER BY #{order_statement}"   unless no_order_by
+            statement << " GROUP BY #{columns_statement(group_by, qualify)}" if use_group_by
+            statement << " ORDER BY #{order_statement}"                      if use_order_by
           end
 
           add_limit_offset!(statement, limit, offset, bind_values) unless use_limit_offset_subquery
